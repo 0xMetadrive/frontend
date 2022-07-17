@@ -4,6 +4,11 @@ import { encrypt } from "@metadrive/lib";
 import { useState } from "react";
 import { Web3Storage } from "web3.storage";
 
+const web3StorageClient = new Web3Storage({
+  token: process.env.NEXT_PUBLIC_WEB3_STORAGE_KEY,
+  endpoint: new URL("https://api.web3.storage"),
+});
+
 export const UploadFile = () => {
   const [file, setFile] = useState<File | null>(null);
 
@@ -12,7 +17,7 @@ export const UploadFile = () => {
   };
 
   const handleFileUpload = async () => {
-    if (file && process.env.WEB3_STORAGE_KEY) {
+    if (file) {
       // Encrypt file
       const fileBuffer = await file.arrayBuffer();
       const { buffer: encryptedFileBuffer, mnemonic } = await encrypt(
@@ -21,18 +26,13 @@ export const UploadFile = () => {
       console.log(mnemonic);
 
       // Upload encrypted file to IPFS
-      const web3StorageClient = new Web3Storage({
-        token: process.env.WEB3_STORAGE_KEY,
-        endpoint: new URL("https://api.web3.storage"),
-      });
-      const cid = await web3StorageClient.put(
+      const ipfsHash = await web3StorageClient.put(
         [new File([encryptedFileBuffer], file.name)],
         {
           wrapWithDirectory: false,
         }
       );
-
-      console.log("Your file is uploaded at: ", cid, ".dweb.link");
+      console.log(ipfsHash);
     }
   };
 
