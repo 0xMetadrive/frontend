@@ -68,11 +68,11 @@ export const UploadFile = ({ connectedUser, isNetworkValid }: CommonProps) => {
         "Minting MetadriveFile NFT and storing file info on-chain"
       );
       const metadriveFileContract = getMetadriveFileContract();
-      console.log("Got contract");
-      await metadriveFileContract.safeMint(
+      const tx = await metadriveFileContract.safeMint(
         "ipfs://" + cid,
         encryptedSymmetricKey
       );
+      await tx.wait();
 
       setLoadingStatus(null);
       setLoading(false);
