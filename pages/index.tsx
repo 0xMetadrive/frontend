@@ -1,8 +1,15 @@
-import { AppShell, Header, Navbar, Text } from "@mantine/core";
+import { AppShell, Group, Header, Navbar, Text } from "@mantine/core";
 import type { NextPage } from "next";
+import ConnectWallet from "../components/ConnectWallet";
 import { UploadFile } from "../components/UploadFile";
+import { CommonProps } from "./_app";
 
-const Home: NextPage = () => {
+const Home: NextPage<CommonProps> = ({
+  connectedUser,
+  setConnectedUser,
+  isNetworkValid,
+  setIsNetworkValid,
+}: CommonProps) => {
   return (
     <AppShell
       padding="md"
@@ -13,7 +20,17 @@ const Home: NextPage = () => {
       }
       header={
         <Header height={60} p="xs">
-          {/* Header content */}
+          <Group position="apart">
+            <Text size="lg" weight="bold">
+              Metadrive
+            </Text>
+            <ConnectWallet
+              connectedUser={connectedUser}
+              setConnectedUser={setConnectedUser}
+              isNetworkValid={isNetworkValid}
+              setIsNetworkValid={setIsNetworkValid}
+            />
+          </Group>
         </Header>
       }
       styles={(theme) => ({

@@ -3,9 +3,10 @@ import { Dropzone } from "@mantine/dropzone";
 import { encrypt } from "@metadrive/lib";
 import { useState } from "react";
 import { Web3Storage } from "web3.storage";
+import { config } from "../config";
 
 const web3StorageClient = new Web3Storage({
-  token: process.env.NEXT_PUBLIC_WEB3_STORAGE_KEY,
+  token: config.web3StorageToken,
   endpoint: new URL("https://api.web3.storage"),
 });
 
