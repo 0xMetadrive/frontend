@@ -1,6 +1,7 @@
 interface Config {
   chainId: number;
   web3StorageToken: string;
+  metadriveFileContractAddress: string;
   metamaskChainInfo: {
     chainId: string;
     rpcUrls: string[];
@@ -15,15 +16,16 @@ interface Config {
 }
 
 interface AllConfigs {
-  dev: Config;
-  prod?: Config;
+  development: Config;
+  production?: Config;
   test?: Config;
 }
 
 const allConfigs: AllConfigs = {
-  dev: {
+  development: {
     chainId: 80001,
-    web3StorageToken: process.env.NEXT_PUBLIC_WEB3_STORAGE_TOKEN_DEV,
+    web3StorageToken: process.env.NEXT_PUBLIC_WEB3_STORAGE_TOKEN,
+    metadriveFileContractAddress: "0xd8dE1c09fe6164ed7FfD0d965EE3cDB3A898d93B",
     metamaskChainInfo: {
       chainId: "0x13881",
       rpcUrls: ["https://rpc-mumbai.matic.today"],
@@ -34,21 +36,6 @@ const allConfigs: AllConfigs = {
         decimals: 18,
       },
       blockExplorerUrls: ["https://mumbai.polygonscan.com"],
-    },
-  },
-  prod: {
-    chainId: 137,
-    web3StorageToken: process.env.NEXT_PUBLIC_WEB3_STORAGE_TOKEN_PROD,
-    metamaskChainInfo: {
-      chainId: "0x89",
-      rpcUrls: ["https://polygon-rpc.com"],
-      chainName: "Polygon",
-      nativeCurrency: {
-        name: "MATIC",
-        symbol: "MATIC",
-        decimals: 18,
-      },
-      blockExplorerUrls: ["https://polygonscan.com/"],
     },
   },
 };

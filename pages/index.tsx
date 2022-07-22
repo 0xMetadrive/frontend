@@ -1,15 +1,22 @@
 import { AppShell, Group, Header, Navbar, Text } from "@mantine/core";
 import type { NextPage } from "next";
+import { Dispatch } from "react";
 import ConnectWallet from "../components/ConnectWallet";
 import { UploadFile } from "../components/UploadFile";
-import { CommonProps } from "./_app";
 
-const Home: NextPage<CommonProps> = ({
+interface HomeProps {
+  connectedUser: string | null;
+  setConnectedUser: Dispatch<string | null>;
+  isNetworkValid: boolean;
+  setIsNetworkValid: Dispatch<boolean>;
+}
+
+const Home: NextPage<HomeProps> = ({
   connectedUser,
   setConnectedUser,
   isNetworkValid,
   setIsNetworkValid,
-}: CommonProps) => {
+}) => {
   return (
     <AppShell
       padding="md"
@@ -42,7 +49,10 @@ const Home: NextPage<CommonProps> = ({
         },
       })}
     >
-      <UploadFile />
+      <UploadFile
+        connectedUser={connectedUser}
+        isNetworkValid={isNetworkValid}
+      />
     </AppShell>
   );
 };

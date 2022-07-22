@@ -6,13 +6,6 @@ import { ethers } from "ethers";
 import { config } from "../config";
 import { MetaMaskInpageProvider } from "@metamask/providers";
 
-export interface CommonProps {
-  connectedUser: string | null;
-  setConnectedUser: Dispatch<string | null>;
-  isNetworkValid: boolean;
-  setIsNetworkValid: Dispatch<boolean>;
-}
-
 export default function App(props: AppProps) {
   const { Component, pageProps } = props;
   const [connectedUser, setConnectedUser] = useState<string | null>(null);
