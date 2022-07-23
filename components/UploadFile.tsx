@@ -1,4 +1,4 @@
-import { Button, Group, Text, LoadingOverlay } from "@mantine/core";
+import { Button, Group, Text } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { encrypt } from "@metadrive/lib";
 import { useState } from "react";
@@ -67,9 +67,19 @@ export const UploadFile = ({ connectedUser, isNetworkValid }: CommonProps) => {
       setLoadingStatus(
         "Minting MetadriveFile NFT and storing file info on-chain"
       );
+      const nftMetadata = {
+        name: "Metadrive file: " + file.name,
+        description: "Encrypted file uploaded on Metadrive",
+        image: "http://files.skghosh.me/files.jpg",
+        external_url: "ipfs://" + cid,
+        filename: file.name,
+      };
+      const dataUrl =
+        "data:application/json;base64," +
+        Buffer.from(JSON.stringify(nftMetadata)).toString("base64");
       const metadriveFileContract = getMetadriveFileContract();
       const tx = await metadriveFileContract.safeMint(
-        "ipfs://" + cid,
+        dataUrl,
         encryptedSymmetricKey
       );
       await tx.wait();

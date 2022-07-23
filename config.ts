@@ -25,7 +25,7 @@ const allConfigs: AllConfigs = {
   development: {
     chainId: 80001,
     web3StorageToken: process.env.NEXT_PUBLIC_WEB3_STORAGE_TOKEN,
-    metadriveFileContractAddress: "0xd8dE1c09fe6164ed7FfD0d965EE3cDB3A898d93B",
+    metadriveFileContractAddress: "0x8A109Dd6f7CC72A82A591948a0EF8EC42f5c88A8",
     metamaskChainInfo: {
       chainId: "0x13881",
       rpcUrls: ["https://rpc-mumbai.matic.today"],
