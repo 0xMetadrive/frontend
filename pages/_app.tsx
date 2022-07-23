@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 import { config } from "../config";
 import { MetaMaskInpageProvider } from "@metamask/providers";
 
-export default function App(props: AppProps) {
+const App = (props: AppProps) => {
   const { Component, pageProps } = props;
   const [connectedUser, setConnectedUser] = useState<string | null>(null);
   const [isNetworkValid, setIsNetworkValid] = useState(false);
@@ -91,4 +91,6 @@ export default function App(props: AppProps) {
       </MantineProvider>
     </>
   );
-}
+};
+
+export default App;

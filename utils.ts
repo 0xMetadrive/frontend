@@ -19,3 +19,7 @@ export const getMetadriveFileContract = () => {
   );
   return metadriveFileContract;
 };
+
+export const trimAddress = (address: string) => {
+  return address.slice(0, 5) + "..." + address.slice(-3);
+};
