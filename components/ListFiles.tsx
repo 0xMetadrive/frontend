@@ -1,15 +1,17 @@
+import { SimpleGrid } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { CommonProps, getMetadriveFileContract } from "../utils";
+import { CommonProps, getMetadriveFileContract, NftInfo } from "../utils";
+import { FileCard } from "./FileCard";
 
 export const ListFiles = ({ connectedUser, isNetworkValid }: CommonProps) => {
   const [loading, setLoading] = useState(false);
-  const [files, setFiles] = useState([]);
+  const [nfts, setNfts] = useState<NftInfo[]>([]);
 
   // Fetch file NFTs and store them in state
   useEffect(() => {
     const fetchFiles = async () => {
       if (!window.ethereum || !connectedUser || !isNetworkValid) {
-        setFiles([]);
+        setNfts([]);
         return;
       }
       setLoading(true);
@@ -17,23 +19,24 @@ export const ListFiles = ({ connectedUser, isNetworkValid }: CommonProps) => {
       try {
         const metadriveFileContract = getMetadriveFileContract();
         const balance = await metadriveFileContract.balanceOf(connectedUser);
-        const tokenIds = await Promise.all(
+        const nftInfos = await Promise.all(
           Array(balance.toNumber())
             .fill(null)
-            .map(
-              async (value, index) =>
-                await metadriveFileContract.tokenOfOwnerByIndex(
-                  connectedUser,
-                  index
-                )
-            )
+            .map(async (value, index) => {
+              const tokenId = await metadriveFileContract.tokenOfOwnerByIndex(
+                connectedUser,
+                index
+              );
+              const metadataUrl = await metadriveFileContract.tokenURI(tokenId);
+              const metadata = await fetch(metadataUrl);
+              const nftInfo: NftInfo = {
+                tokenId: tokenId.toNumber(),
+                metadata: await metadata.json(),
+              };
+              return nftInfo;
+            })
         );
-        const metadataUrls = await Promise.all(
-          tokenIds.map(
-            async (value) => await metadriveFileContract.tokenURI(value)
-          )
-        );
-        console.log(metadataUrls);
+        setNfts(nftInfos);
       } catch (error) {
         console.log(error);
       }
@@ -44,5 +47,16 @@ export const ListFiles = ({ connectedUser, isNetworkValid }: CommonProps) => {
     fetchFiles();
   }, [connectedUser, isNetworkValid]);
 
-  return <div>hello {connectedUser}</div>;
+  return (
+    <SimpleGrid cols={4}>
+      {nfts.map((nftInfo: NftInfo) => (
+        <FileCard
+          key={nftInfo.tokenId}
+          nftInfo={nftInfo}
+          connectedUser={connectedUser}
+          isNetworkValid={isNetworkValid}
+        />
+      ))}
+    </SimpleGrid>
+  );
 };

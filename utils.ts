@@ -7,6 +7,19 @@ export interface CommonProps {
   isNetworkValid: boolean;
 }
 
+export interface NftInfo {
+  tokenId: number;
+  metadata: NftMetadata;
+}
+
+export interface NftMetadata {
+  name: string;
+  description: string;
+  image: string;
+  external_url: string;
+  filename: string;
+}
+
 export const getMetadriveFileContract = () => {
   const provider = new ethers.providers.Web3Provider(
     window.ethereum as ethers.providers.ExternalProvider,
@@ -22,4 +35,18 @@ export const getMetadriveFileContract = () => {
 
 export const trimAddress = (address: string) => {
   return address.slice(0, 5) + "..." + address.slice(-3);
+};
+
+interface ParsedFileUrl {
+  ipfsCid?: string;
+}
+
+export const parseFileUrl = (url: string): ParsedFileUrl | null => {
+  if (url.startsWith("ipfs://")) {
+    return {
+      ipfsCid: url.slice(7),
+    };
+  } else {
+    return null;
+  }
 };

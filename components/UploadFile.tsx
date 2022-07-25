@@ -1,12 +1,13 @@
-import { Button, Group, Text } from "@mantine/core";
+import { Button, Stack, Text } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
-import { encrypt } from "@metadrive/lib";
+import { decrypt, encrypt } from "@metadrive/lib";
 import { useState } from "react";
 import { Web3Storage } from "web3.storage";
 import { config } from "../config";
 import { MetaMaskInpageProvider } from "@metamask/providers";
 import * as sigUtil from "@metamask/eth-sig-util";
-import { CommonProps, getMetadriveFileContract } from "../utils";
+import { CommonProps, getMetadriveFileContract, NftMetadata } from "../utils";
+import * as bip39 from "bip39";
 
 const web3StorageClient = new Web3Storage({
   token: config.web3StorageToken,
@@ -46,6 +47,12 @@ export const UploadFile = ({ connectedUser, isNetworkValid }: CommonProps) => {
         }
       );
 
+      // Sanity check
+      const fetchResponse = await fetch("https://ipfs.io/ipfs/" + cid);
+      const buffer = new Uint8Array(await fetchResponse.arrayBuffer());
+      const key = await bip39.mnemonicToSeed(mnemonic);
+      await decrypt(buffer, key);
+
       // Encrypt symmetric key with user's public key
       setLoadingStatus("Encrypting key to store securely on-chain");
       const ethereum = window.ethereum as MetaMaskInpageProvider;
@@ -67,7 +74,7 @@ export const UploadFile = ({ connectedUser, isNetworkValid }: CommonProps) => {
       setLoadingStatus(
         "Minting MetadriveFile NFT and storing file info on-chain"
       );
-      const nftMetadata = {
+      const nftMetadata: NftMetadata = {
         name: "Metadrive file: " + file.name,
         description: "Encrypted file uploaded on Metadrive",
         image: "http://files.skghosh.me/files.jpg",
@@ -95,20 +102,16 @@ export const UploadFile = ({ connectedUser, isNetworkValid }: CommonProps) => {
   };
 
   return (
-    <Group direction="column" grow={true}>
+    <Stack>
       <Dropzone onDrop={handleDropzoneDrop} multiple={false}>
-        {() => (
-          <Group position="center" direction="column">
-            {file ? <Text weight="semibold">Selected: {file.name}</Text> : null}
-            <Text weight="semibold">
-              Drag image here or click to select file
-            </Text>
-          </Group>
-        )}
+        <Stack>
+          {file ? <Text weight="semibold">Selected: {file.name}</Text> : null}
+          <Text weight="semibold">Drag image here or click to select file</Text>
+        </Stack>
       </Dropzone>
       <Button loading={loading} onClick={handleFileUpload}>
         {loading && loadingStatus ? loadingStatus : "Upload"}
       </Button>
-    </Group>
+    </Stack>
   );
 };
