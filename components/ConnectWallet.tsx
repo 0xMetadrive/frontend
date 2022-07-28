@@ -2,16 +2,15 @@ import { Button } from "@mantine/core";
 import { ethers } from "ethers";
 import { config } from "../config";
 import { CommonProps, trimAddress } from "../utils";
-import { Dispatch } from "react";
 
-interface ConnectWalletProps extends CommonProps {
-  setConnectedUser: Dispatch<string | null>;
-  setIsNetworkValid: Dispatch<boolean>;
-}
+type ConnectWalletProps = Omit<
+  CommonProps,
+  "connectedUser" | "setConnectedUser"
+>;
 
 const ConnectWallet = ({
-  connectedUser,
-  setConnectedUser,
+  connectedWallet,
+  setConnectedWallet,
   isNetworkValid,
   setIsNetworkValid,
 }: ConnectWalletProps) => {
@@ -26,12 +25,12 @@ const ConnectWallet = ({
     );
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
-    // Get user
+    // Get wallet
     try {
-      const user = await signer.getAddress();
-      setConnectedUser(user);
+      const wallet = await signer.getAddress();
+      setConnectedWallet(wallet);
     } catch (error) {
-      setConnectedUser(null);
+      setConnectedWallet(null);
     }
     // Get chain
     const chainId = await signer.getChainId();
@@ -51,9 +50,9 @@ const ConnectWallet = ({
     await provider.send("wallet_addEthereumChain", [config.metamaskChainInfo]);
   };
 
-  return connectedUser ? (
+  return connectedWallet ? (
     isNetworkValid ? (
-      <Button>Connected to {trimAddress(connectedUser)}</Button>
+      <Button>Connected to {trimAddress(connectedWallet)}</Button>
     ) : (
       <Button onClick={changeChain}>Connect to Polygon!</Button>
     )

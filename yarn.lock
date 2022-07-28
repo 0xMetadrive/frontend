@@ -657,9 +657,9 @@
     pkcs7-padding "^0.1.1"
 
 "@metadrive/typechain-types@^0.1.1":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@metadrive/typechain-types/-/typechain-types-0.1.2.tgz#7369cce3cbe83c77b9a3b3ed505a2a534bf320ff"
-  integrity sha512-3C4prXqR7H+F+b8GmtS9RiurrA8uN6RSjMvZJyAGTTT18JDEoP4hmZTotEkH4fPjlyZFbMJD78xNAeOqPt4J+A==
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@metadrive/typechain-types/-/typechain-types-0.1.3.tgz#8a062ca53c4184240288a85fea46459c6aa854fb"
+  integrity sha512-7D56IwOtpdXYDrPp9K1zrNuvP+/5jyOCXdL2Dkxm5C7J9Ri9zdsPKlGiArP+O4OKgK8pOY2lrJgXjV2JVq64DA==
 
 "@metamask/eth-sig-util@^4.0.1":
   version "4.0.1"

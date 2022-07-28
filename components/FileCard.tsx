@@ -9,18 +9,21 @@ import {
 import * as bip39 from "bip39";
 import { decrypt } from "@metadrive/lib";
 import { saveAs } from "file-saver";
+import { SharingModal } from "./SharingModal";
+import { useState } from "react";
 
-interface FileCardProps extends CommonProps {
+interface FileCardProps extends Pick<CommonProps, "connectedWallet"> {
   nftInfo: NftInfo;
 }
 
 export const FileCard = ({
-  connectedUser,
-  isNetworkValid,
+  connectedWallet,
   nftInfo: { tokenId, metadata },
 }: FileCardProps) => {
+  const [isSharingModalOpened, setIsSharingModalOpened] = useState(false);
+
   const handleFileDownload = async () => {
-    if (!(window.ethereum && connectedUser && isNetworkValid && metadata)) {
+    if (!(window.ethereum && metadata && connectedWallet)) {
       return;
     }
 
@@ -31,15 +34,15 @@ export const FileCard = ({
     }
 
     const metadriveFileContract = getMetadriveFileContract();
-    const encryptedSymmetricKey = await metadriveFileContract.keys(
+    const encryptedSymmetricKey = await metadriveFileContract.encryptionKeys(
       tokenId,
-      connectedUser
+      connectedWallet
     );
 
     const ethereum = window.ethereum as MetaMaskInpageProvider;
     const mnemonic = await ethereum.request({
       method: "eth_decrypt",
-      params: [encryptedSymmetricKey, connectedUser],
+      params: [encryptedSymmetricKey, connectedWallet],
     });
 
     const symmetricKey: Buffer = await bip39.mnemonicToSeed(mnemonic as string);
@@ -51,11 +54,20 @@ export const FileCard = ({
   };
 
   return (
-    <Card>
-      <Stack>
-        <Text>{metadata.filename}</Text>
-        <Button onClick={handleFileDownload}>Download file</Button>
-      </Stack>
-    </Card>
+    <>
+      <SharingModal
+        opened={isSharingModalOpened}
+        setOpened={setIsSharingModalOpened}
+        connectedWallet={connectedWallet}
+        tokenId={tokenId}
+      />
+      <Card>
+        <Stack>
+          <Text>{metadata.filename}</Text>
+          <Button onClick={handleFileDownload}>Download</Button>
+          <Button onClick={() => setIsSharingModalOpened(true)}>Share</Button>
+        </Stack>
+      </Card>
+    </>
   );
 };

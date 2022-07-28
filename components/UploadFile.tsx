@@ -1,20 +1,20 @@
 import { Button, Stack, Text } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
-import { decrypt, encrypt } from "@metadrive/lib";
+import { encrypt } from "@metadrive/lib";
 import { useState } from "react";
 import { Web3Storage } from "web3.storage";
 import { config } from "../config";
-import { MetaMaskInpageProvider } from "@metamask/providers";
 import * as sigUtil from "@metamask/eth-sig-util";
 import { CommonProps, getMetadriveFileContract, NftMetadata } from "../utils";
-import * as bip39 from "bip39";
 
 const web3StorageClient = new Web3Storage({
   token: config.web3StorageToken,
   endpoint: new URL("https://api.web3.storage"),
 });
 
-export const UploadFile = ({ connectedUser, isNetworkValid }: CommonProps) => {
+type UploadFileProps = Pick<CommonProps, "connectedUser">;
+
+export const UploadFile = ({ connectedUser }: UploadFileProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<string | null>(null);
@@ -25,12 +25,14 @@ export const UploadFile = ({ connectedUser, isNetworkValid }: CommonProps) => {
 
   const handleFileUpload = async () => {
     // Check if there's a file and valid wallet config
-    if (!(window.ethereum && file && connectedUser && isNetworkValid)) {
+    if (!(file && connectedUser)) {
       return;
     }
     setLoading(true);
 
     try {
+      const metadriveFileContract = getMetadriveFileContract();
+
       // Encrypt file
       setLoadingStatus("Encrypting file");
       const fileBuffer = await file.arrayBuffer();
@@ -47,23 +49,11 @@ export const UploadFile = ({ connectedUser, isNetworkValid }: CommonProps) => {
         }
       );
 
-      // Sanity check
-      const fetchResponse = await fetch("https://ipfs.io/ipfs/" + cid);
-      const buffer = new Uint8Array(await fetchResponse.arrayBuffer());
-      const key = await bip39.mnemonicToSeed(mnemonic);
-      await decrypt(buffer, key);
-
       // Encrypt symmetric key with user's public key
-      setLoadingStatus("Encrypting key to store securely on-chain");
-      const ethereum = window.ethereum as MetaMaskInpageProvider;
-      const encryptionPublicKey = await ethereum.request({
-        method: "eth_getEncryptionPublicKey",
-        params: [connectedUser],
-      });
       const encryptedSymmetricKey = Buffer.from(
         JSON.stringify(
           sigUtil.encrypt({
-            publicKey: encryptionPublicKey as string,
+            publicKey: connectedUser.publicKey.toString("base64"),
             data: mnemonic,
             version: "x25519-xsalsa20-poly1305",
           })
@@ -84,7 +74,6 @@ export const UploadFile = ({ connectedUser, isNetworkValid }: CommonProps) => {
       const dataUrl =
         "data:application/json;base64," +
         Buffer.from(JSON.stringify(nftMetadata)).toString("base64");
-      const metadriveFileContract = getMetadriveFileContract();
       const tx = await metadriveFileContract.safeMint(
         dataUrl,
         encryptedSymmetricKey

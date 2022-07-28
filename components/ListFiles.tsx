@@ -3,14 +3,16 @@ import { useEffect, useState } from "react";
 import { CommonProps, getMetadriveFileContract, NftInfo } from "../utils";
 import { FileCard } from "./FileCard";
 
-export const ListFiles = ({ connectedUser, isNetworkValid }: CommonProps) => {
+type ListFilesProps = Pick<CommonProps, "connectedWallet">;
+
+export const ListFiles = ({ connectedWallet }: ListFilesProps) => {
   const [loading, setLoading] = useState(false);
   const [nfts, setNfts] = useState<NftInfo[]>([]);
 
   // Fetch file NFTs and store them in state
   useEffect(() => {
     const fetchFiles = async () => {
-      if (!window.ethereum || !connectedUser || !isNetworkValid) {
+      if (!connectedWallet) {
         setNfts([]);
         return;
       }
@@ -18,13 +20,13 @@ export const ListFiles = ({ connectedUser, isNetworkValid }: CommonProps) => {
 
       try {
         const metadriveFileContract = getMetadriveFileContract();
-        const balance = await metadriveFileContract.balanceOf(connectedUser);
+        const balance = await metadriveFileContract.balanceOf(connectedWallet);
         const nftInfos = await Promise.all(
           Array(balance.toNumber())
             .fill(null)
             .map(async (value, index) => {
               const tokenId = await metadriveFileContract.tokenOfOwnerByIndex(
-                connectedUser,
+                connectedWallet,
                 index
               );
               const metadataUrl = await metadriveFileContract.tokenURI(tokenId);
@@ -45,7 +47,7 @@ export const ListFiles = ({ connectedUser, isNetworkValid }: CommonProps) => {
     };
 
     fetchFiles();
-  }, [connectedUser, isNetworkValid]);
+  }, [connectedWallet]);
 
   return (
     <SimpleGrid cols={4}>
@@ -53,8 +55,7 @@ export const ListFiles = ({ connectedUser, isNetworkValid }: CommonProps) => {
         <FileCard
           key={nftInfo.tokenId}
           nftInfo={nftInfo}
-          connectedUser={connectedUser}
-          isNetworkValid={isNetworkValid}
+          connectedWallet={connectedWallet}
         />
       ))}
     </SimpleGrid>

@@ -5,14 +5,16 @@ import { useEffect, useState, Dispatch } from "react";
 import { ethers } from "ethers";
 import { config } from "../config";
 import { MetaMaskInpageProvider } from "@metamask/providers";
+import { getUser, User } from "../utils";
 
 const App = (props: AppProps) => {
   const { Component, pageProps } = props;
-  const [connectedUser, setConnectedUser] = useState<string | null>(null);
+  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
+  const [connectedUser, setConnectedUser] = useState<User | null>(null);
   const [isNetworkValid, setIsNetworkValid] = useState(false);
 
+  // On every page load, check if wallet is connected or not
   useEffect(() => {
-    // On every page load, check if wallet is connected or not
     const verifyConnection = async () => {
       if (!window.ethereum) {
         console.log("Metamask is not installed.");
@@ -24,12 +26,12 @@ const App = (props: AppProps) => {
         "any"
       );
       const signer = provider.getSigner();
-      // Get user
+      // Get wallet
       try {
         const user = await signer.getAddress();
-        setConnectedUser(user);
+        setConnectedWallet(user);
       } catch (error) {
-        setConnectedUser(null);
+        setConnectedWallet(null);
       }
       // Get chain
       const chainId = await signer.getChainId();
@@ -39,16 +41,29 @@ const App = (props: AppProps) => {
     verifyConnection();
   }, []);
 
+  // Get user details on wallet and network change
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!window.ethereum || !connectedWallet || !isNetworkValid) {
+        setConnectedUser(null);
+        return;
+      }
+      const user = await getUser(connectedWallet);
+      setConnectedUser(user);
+    };
+
+    fetchUser();
+  }, [connectedWallet, isNetworkValid]);
+
   // Event listener for account and chain change on Metamask
   useEffect(() => {
     if (!window.ethereum) {
-      console.log("Metamask is not installed.");
       return;
     }
     const ethereum = window.ethereum as MetaMaskInpageProvider;
 
     const handleAccountsChanged = (accounts: string[]) => {
-      setConnectedUser(accounts.length ? accounts[0] : null);
+      setConnectedWallet(accounts.length ? accounts[0] : null);
     };
     const handleChainChanged = () => {
       window.location.reload();
@@ -77,12 +92,13 @@ const App = (props: AppProps) => {
         withGlobalStyles
         withNormalizeCSS
         theme={{
-          /** Put your mantine theme override here */
           colorScheme: "light",
         }}
       >
         <Component
           {...pageProps}
+          connectedWallet={connectedWallet}
+          setConnectedWallet={setConnectedWallet}
           connectedUser={connectedUser}
           setConnectedUser={setConnectedUser}
           isNetworkValid={isNetworkValid}

@@ -1,17 +1,14 @@
-import { AppShell, Group, Header, Text } from "@mantine/core";
+import { AppShell, Group, Header, Stack, Text } from "@mantine/core";
 import type { NextPage } from "next";
-import { Dispatch } from "react";
 import ConnectWallet from "../components/ConnectWallet";
+import { CreateUser } from "../components/CreateUser";
 import { ListFiles } from "../components/ListFiles";
 import { UploadFile } from "../components/UploadFile";
 import { CommonProps } from "../utils";
 
-interface HomeProps extends CommonProps {
-  setConnectedUser: Dispatch<string | null>;
-  setIsNetworkValid: Dispatch<boolean>;
-}
-
-const Home: NextPage<HomeProps> = ({
+const Home: NextPage<CommonProps> = ({
+  connectedWallet,
+  setConnectedWallet,
   connectedUser,
   setConnectedUser,
   isNetworkValid,
@@ -26,12 +23,15 @@ const Home: NextPage<HomeProps> = ({
             <Text size="lg" weight="bold">
               Metadrive
             </Text>
-            <ConnectWallet
-              connectedUser={connectedUser}
-              setConnectedUser={setConnectedUser}
-              isNetworkValid={isNetworkValid}
-              setIsNetworkValid={setIsNetworkValid}
-            />
+            <Group>
+              <Text>{connectedUser ? "Logged in" : ""}</Text>
+              <ConnectWallet
+                connectedWallet={connectedWallet}
+                setConnectedWallet={setConnectedWallet}
+                isNetworkValid={isNetworkValid}
+                setIsNetworkValid={setIsNetworkValid}
+              />
+            </Group>
           </Group>
         </Header>
       }
@@ -44,16 +44,19 @@ const Home: NextPage<HomeProps> = ({
         },
       })}
     >
-      <Group>
-        <UploadFile
-          connectedUser={connectedUser}
-          isNetworkValid={isNetworkValid}
+      {connectedUser ? (
+        <>
+          <Group>
+            <UploadFile connectedUser={connectedUser} />
+          </Group>
+          <ListFiles connectedWallet={connectedWallet} />
+        </>
+      ) : (
+        <CreateUser
+          connectedWallet={connectedWallet}
+          setConnectedUser={setConnectedUser}
         />
-      </Group>
-      <ListFiles
-        connectedUser={connectedUser}
-        isNetworkValid={isNetworkValid}
-      />
+      )}
     </AppShell>
   );
 };
