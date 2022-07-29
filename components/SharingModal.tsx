@@ -1,9 +1,11 @@
-import { Button, Group, Modal, Stack, TextInput } from "@mantine/core";
+import { Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { MetaMaskInpageProvider } from "@metamask/providers";
 import { BigNumberish, ethers } from "ethers";
 import { Dispatch, useEffect, useState } from "react";
-import { CommonProps, getMetadriveFileContract, getUser } from "../utils";
+import { CommonProps, getMetadriveFileContract, getUser, User } from "../utils";
 import * as sigUtil from "@metamask/eth-sig-util";
+import { useDebouncedValue } from "@mantine/hooks";
+import { CheckCircle } from "phosphor-react";
 
 interface SharingModalProps extends Pick<CommonProps, "connectedWallet"> {
   opened: boolean;
@@ -18,22 +20,18 @@ export const SharingModal = ({
   tokenId,
 }: SharingModalProps) => {
   const [address, setAddress] = useState<string>("");
+  const [debouncedAddress, cancelDebounce] = useDebouncedValue(address, 200);
   const [isAddressValid, setIsAddressValid] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleShare = async () => {
-    if (!(connectedWallet && isAddressValid)) {
+    if (!(connectedWallet && isAddressValid && user)) {
       return;
     }
 
     setLoading(true);
     try {
-      const userToShareWith = await getUser(address);
-      if (!userToShareWith) {
-        console.log("User does not exist");
-        return;
-      }
-
       const metadriveFileContract = getMetadriveFileContract();
       const ownerEncryptionKey = await metadriveFileContract.encryptionKeys(
         tokenId,
@@ -50,7 +48,7 @@ export const SharingModal = ({
       const userEncryptionKey = Buffer.from(
         JSON.stringify(
           sigUtil.encrypt({
-            publicKey: userToShareWith.publicKey.toString("base64"),
+            publicKey: user.publicKey.toString("base64"),
             data: mnemonic,
             version: "x25519-xsalsa20-poly1305",
           })
@@ -66,6 +64,7 @@ export const SharingModal = ({
     } catch (error) {
       console.log(error);
     }
+
     setLoading(false);
   };
 
@@ -79,28 +78,58 @@ export const SharingModal = ({
     }
   }, [address]);
 
+  // Fetch user details for the entered address
+  useEffect(() => {
+    const fetchUser = async () => {
+      setUser(null);
+      if (!(isAddressValid && connectedWallet)) {
+        return;
+      }
+
+      try {
+        const user = await getUser(debouncedAddress);
+        setUser(user);
+        return;
+      } catch (error) {
+        console.log(error);
+      }
+      setUser(null);
+    };
+
+    fetchUser();
+  }, [debouncedAddress, connectedWallet, isAddressValid]);
+
   return (
-    <Modal
-      centered
-      opened={opened}
-      onClose={() => setOpened(false)}
-      overflow="inside"
-      title="Share file"
-    >
-      <Stack>
-        <Group>
-          <TextInput
-            value={address}
-            onChange={(event) => setAddress(event.currentTarget.value)}
-            placeholder="Address"
-            label="Address"
-            error={isAddressValid ? false : "Invalid user address"}
-          />
-          <Button onClick={handleShare} loading={loading}>
-            Share
-          </Button>
-        </Group>
-      </Stack>
-    </Modal>
+    <>
+      <Modal
+        centered
+        opened={opened}
+        onClose={() => setOpened(false)}
+        overflow="inside"
+        title="Share file"
+      >
+        <Stack>
+          <Stack>
+            <TextInput
+              value={address}
+              onChange={(event) => setAddress(event.currentTarget.value)}
+              label="Address"
+              description="Of the user you want to share the file with"
+              error={
+                isAddressValid
+                  ? user
+                    ? false
+                    : "Address is not a Metadrive user"
+                  : "Invalid address"
+              }
+              rightSection={user ? <CheckCircle color="green" /> : null}
+            />
+            <Button onClick={handleShare} loading={loading} disabled={!user}>
+              {user ? "Share with " + user.username : "Share"}
+            </Button>
+          </Stack>
+        </Stack>
+      </Modal>
+    </>
   );
 };

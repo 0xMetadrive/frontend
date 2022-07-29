@@ -1,6 +1,7 @@
 import { AppProps } from "next/app";
 import Head from "next/head";
 import { MantineProvider } from "@mantine/core";
+import { ModalsProvider } from "@mantine/modals";
 import { useEffect, useState, Dispatch } from "react";
 import { ethers } from "ethers";
 import { config } from "../config";
@@ -95,15 +96,17 @@ const App = (props: AppProps) => {
           colorScheme: "light",
         }}
       >
-        <Component
-          {...pageProps}
-          connectedWallet={connectedWallet}
-          setConnectedWallet={setConnectedWallet}
-          connectedUser={connectedUser}
-          setConnectedUser={setConnectedUser}
-          isNetworkValid={isNetworkValid}
-          setIsNetworkValid={setIsNetworkValid}
-        />
+        <ModalsProvider>
+          <Component
+            {...pageProps}
+            connectedWallet={connectedWallet}
+            setConnectedWallet={setConnectedWallet}
+            connectedUser={connectedUser}
+            setConnectedUser={setConnectedUser}
+            isNetworkValid={isNetworkValid}
+            setIsNetworkValid={setIsNetworkValid}
+          />
+        </ModalsProvider>
       </MantineProvider>
     </>
   );
