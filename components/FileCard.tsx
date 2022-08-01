@@ -11,7 +11,7 @@ import * as bip39 from "bip39";
 import { decrypt } from "@metadrive/lib";
 import { saveAs } from "file-saver";
 import { SharingModal } from "./SharingModal";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Download, Share } from "phosphor-react";
 
 interface FileCardProps extends Pick<CommonProps, "connectedWallet"> {

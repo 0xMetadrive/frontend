@@ -20,15 +20,21 @@ import {
   trimAddress,
 } from "../utils";
 import * as sigUtil from "@metamask/eth-sig-util";
-import { useDebouncedValue } from "@mantine/hooks";
+import { useDebouncedValue, useListState } from "@mantine/hooks";
 import { CheckCircle, Share, XCircle } from "phosphor-react";
 
 interface SharedWithProps extends Pick<CommonProps, "connectedWallet"> {
   tokenId: BigNumberish;
   address: string;
+  remove: () => void;
 }
 
-const SharedWith = ({ connectedWallet, tokenId, address }: SharedWithProps) => {
+const SharedWith = ({
+  connectedWallet,
+  tokenId,
+  address,
+  remove,
+}: SharedWithProps) => {
   const [loading, setLoading] = useState(false);
 
   const handleUnshare = async (address: string) => {
@@ -41,6 +47,7 @@ const SharedWith = ({ connectedWallet, tokenId, address }: SharedWithProps) => {
       const metadriveFileContract = getMetadriveFileContract();
       const tx = await metadriveFileContract.unshare(tokenId, address);
       await tx.wait();
+      remove();
     } catch (error) {
       console.log(error);
     }
@@ -78,13 +85,15 @@ export const SharingModal = ({
   opened,
   setOpened,
   tokenId,
-  sharedWith,
+  sharedWith: sharedWithUpstream,
 }: SharingModalProps) => {
   const [address, setAddress] = useState<string>("");
   const [debouncedAddress] = useDebouncedValue(address, 200);
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [publicKey, setPublicKey] = useState<Buffer | null>(null);
   const [loading, setLoading] = useState(false);
+  const [sharedWith, sharedWithHandlers] =
+    useListState<string>(sharedWithUpstream);
 
   const handleShare = async () => {
     if (!(connectedWallet && isAddressValid && publicKey)) {
@@ -123,6 +132,7 @@ export const SharingModal = ({
       );
       await tx.wait();
 
+      sharedWithHandlers.prepend(address);
       setAddress("");
     } catch (error) {
       console.log(error);
@@ -203,6 +213,9 @@ export const SharingModal = ({
                     tokenId={tokenId}
                     connectedWallet={connectedWallet}
                     address={address}
+                    remove={() =>
+                      sharedWithHandlers.remove(sharedWith.indexOf(address))
+                    }
                   />
                 ))}
               </Stack>

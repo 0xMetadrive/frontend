@@ -13,11 +13,13 @@ import ConnectWallet from "../components/ConnectWallet";
 import { RegisterButton } from "../components/RegisterButton";
 import { ListFiles } from "../components/ListFiles";
 import { UploadFile } from "../components/UploadFile";
-import { getPublicKey } from "../utils";
+import { FileInfo, getFiles, getPublicKey } from "../utils";
 import { useEffect, useState } from "react";
 import { MetaMaskInpageProvider } from "@metamask/providers";
 import { config } from "../config";
 import { ethers } from "ethers";
+import { randomBytes } from "crypto";
+import { useListState } from "@mantine/hooks";
 
 const Home: NextPage = () => {
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
@@ -26,6 +28,7 @@ const Home: NextPage = () => {
   );
   const [isNetworkValid, setIsNetworkValid] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fileInfos, fileInfosHandlers] = useListState<FileInfo>([]);
 
   // On every page load, check if wallet is connected or not
   useEffect(() => {
@@ -78,6 +81,25 @@ const Home: NextPage = () => {
 
     fetchPublicKey();
   }, [connectedWallet, isNetworkValid]);
+
+  // Fetch file NFTs and store them in state
+  useEffect(() => {
+    const fetchFiles = async () => {
+      fileInfosHandlers.setState([]);
+      if (!connectedWallet) {
+        return;
+      }
+
+      try {
+        const fileInfos = await getFiles(connectedWallet);
+        fileInfosHandlers.setState(fileInfos);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchFiles();
+  }, [connectedWallet]);
 
   // Event listener for account and chain change on Metamask
   useEffect(() => {
@@ -143,9 +165,13 @@ const Home: NextPage = () => {
               <UploadFile
                 connectedPublicKey={connectedPublicKey}
                 connectedWallet={connectedWallet}
+                fileInfosAppend={fileInfosHandlers.append}
               />
             </Group>
-            <ListFiles connectedWallet={connectedWallet} />
+            <ListFiles
+              connectedWallet={connectedWallet}
+              fileInfos={fileInfos}
+            />
           </Stack>
         ) : (
           <Group position="center">

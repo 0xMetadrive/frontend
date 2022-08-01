@@ -1,25 +1,31 @@
-import { Button, Group, Stack, Text } from "@mantine/core";
+import { Button, Stack, Text } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { encrypt } from "@metadrive/lib";
 import { useState } from "react";
 import { Web3Storage } from "web3.storage";
 import { config } from "../config";
 import * as sigUtil from "@metamask/eth-sig-util";
-import { CommonProps, getMetadriveFileContract, NftMetadata } from "../utils";
+import {
+  CommonProps,
+  FileInfo,
+  getMetadriveFileContract,
+  NftMetadata,
+} from "../utils";
 
 const web3StorageClient = new Web3Storage({
   token: config.web3StorageToken,
   endpoint: new URL("https://api.web3.storage"),
 });
 
-type UploadFileProps = Pick<
-  CommonProps,
-  "connectedPublicKey" | "connectedWallet"
->;
+interface UploadFileProps
+  extends Pick<CommonProps, "connectedPublicKey" | "connectedWallet"> {
+  fileInfosAppend: (...items: FileInfo[]) => void;
+}
 
 export const UploadFile = ({
   connectedPublicKey,
   connectedWallet,
+  fileInfosAppend,
 }: UploadFileProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,9 +73,7 @@ export const UploadFile = ({
       ).toString("hex");
 
       // Mint MetadriveFile NFT for the uploaded file
-      setLoadingStatus(
-        "Minting MetadriveFile NFT and storing file info on-chain"
-      );
+      setLoadingStatus("Minting MetadriveFile NFT");
       const nftMetadata: NftMetadata = {
         name: "Metadrive file: " + file.name,
         description: "Encrypted file uploaded on Metadrive",
@@ -85,10 +89,21 @@ export const UploadFile = ({
         dataUrl,
         encryptedSymmetricKey
       );
-      await tx.wait();
+      const receipt = await tx.wait();
+      const mintEvent = receipt.events?.filter((x) => {
+        return x.event === "Mint";
+      })[0];
+      const tokenId: number = Number(mintEvent?.args?.tokenId);
 
       setLoadingStatus(null);
       setLoading(false);
+      setFile(null);
+      fileInfosAppend({
+        tokenId,
+        filename: file.name,
+        url: "ipfs://" + cid,
+        sharedWith: [],
+      });
     } catch (error) {
       console.log(error);
     }
