@@ -1,11 +1,12 @@
 import { Button } from "@mantine/core";
 import { ethers } from "ethers";
+import { UserCircle, WarningCircle } from "phosphor-react";
 import { config } from "../config";
 import { CommonProps, trimAddress } from "../utils";
 
 type ConnectWalletProps = Omit<
   CommonProps,
-  "connectedUser" | "setConnectedUser"
+  "connectedPublicKey" | "setConnectedPublicKey"
 >;
 
 const ConnectWallet = ({
@@ -52,12 +53,28 @@ const ConnectWallet = ({
 
   return connectedWallet ? (
     isNetworkValid ? (
-      <Button>Connected to {trimAddress(connectedWallet)}</Button>
+      <Button
+        leftIcon={<UserCircle size={20} />}
+        variant="gradient"
+        gradient={{ from: "teal", to: "lime", deg: 105 }}
+      >
+        Connected to {trimAddress(connectedWallet, 4)}
+      </Button>
     ) : (
-      <Button onClick={changeChain}>Connect to Polygon!</Button>
+      <Button
+        leftIcon={<WarningCircle size={20} />}
+        variant="gradient"
+        gradient={{ from: "orange", to: "red" }}
+        onClick={changeChain}
+      >
+        {"Switch network to " + config.chainName}
+      </Button>
     )
   ) : (
     <Button
+      leftIcon={<WarningCircle size={20} />}
+      variant="gradient"
+      gradient={{ from: "orange", to: "red" }}
       onClick={async () => {
         await changeChain();
         await connectWallet();

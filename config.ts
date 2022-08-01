@@ -1,7 +1,9 @@
 interface Config {
   chainId: number;
   web3StorageToken: string;
+  chainName: string;
   metadriveFileContractAddress: string;
+  metadriveFileSubgraphAddress: string;
   metamaskChainInfo: {
     chainId: string;
     rpcUrls: string[];
@@ -24,8 +26,11 @@ interface AllConfigs {
 const allConfigs: AllConfigs = {
   development: {
     chainId: 80001,
+    chainName: "Polygon Mumbai",
     web3StorageToken: process.env.NEXT_PUBLIC_WEB3_STORAGE_TOKEN,
-    metadriveFileContractAddress: "0x82e0fAdd7D7aD0338d7EE0190D67F7294EF07119",
+    metadriveFileContractAddress: "0x4eD57116844256Ad97d9A008af1E1865126a5D9C",
+    metadriveFileSubgraphAddress:
+      "https://api.thegraph.com/subgraphs/name/0xmetadrive/metadrive-alpha-mumbai",
     metamaskChainInfo: {
       chainId: "0x13881",
       rpcUrls: ["https://rpc-mumbai.matic.today"],

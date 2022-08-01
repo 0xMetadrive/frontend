@@ -1,21 +1,21 @@
-import { Button, Group, TextInput } from "@mantine/core";
+import { Button, Stack, Text } from "@mantine/core";
 import { MetaMaskInpageProvider } from "@metamask/providers";
+import { SignIn } from "phosphor-react";
 import { useState } from "react";
 import { CommonProps, getMetadriveFileContract } from "../utils";
 
-type CreateUserProps = Pick<
+type RegisterButtonProps = Pick<
   CommonProps,
-  "connectedWallet" | "setConnectedUser"
+  "connectedWallet" | "setConnectedPublicKey"
 >;
 
-export const CreateUser = ({
+export const RegisterButton = ({
   connectedWallet,
-  setConnectedUser,
-}: CreateUserProps) => {
-  const [username, setUsername] = useState("");
+  setConnectedPublicKey,
+}: RegisterButtonProps) => {
   const [loading, setLoading] = useState(false);
 
-  const handleCreateUser = async () => {
+  const handleRegister = async () => {
     if (!(window.ethereum && connectedWallet)) {
       return;
     }
@@ -31,10 +31,10 @@ export const CreateUser = ({
       const pkBuffer = Buffer.from(pkBase64 as string, "base64");
 
       const metadriveFileContract = getMetadriveFileContract();
-      const tx = await metadriveFileContract.createUser(username, pkBuffer);
+      const tx = await metadriveFileContract.register(pkBuffer);
       await tx.wait();
 
-      setConnectedUser({ username, publicKey: pkBuffer });
+      setConnectedPublicKey(pkBuffer);
     } catch (error) {
       console.log(error);
     }
@@ -42,16 +42,11 @@ export const CreateUser = ({
   };
 
   return (
-    <Group>
-      <TextInput
-        value={username}
-        onChange={(event) => setUsername(event.currentTarget.value)}
-        placeholder="Username"
-        label="Username"
-      />
-      <Button onClick={handleCreateUser} loading={loading}>
-        Create account
+    <Stack>
+      <Text>You are required to register before you can use Metadrive</Text>
+      <Button leftIcon={<SignIn />} onClick={handleRegister} loading={loading}>
+        Register
       </Button>
-    </Group>
+    </Stack>
   );
 };

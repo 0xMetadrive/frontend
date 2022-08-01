@@ -1,4 +1,4 @@
-import { Button, Stack, Text } from "@mantine/core";
+import { Button, Group, Stack, Text } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { encrypt } from "@metadrive/lib";
 import { useState } from "react";
@@ -12,9 +12,15 @@ const web3StorageClient = new Web3Storage({
   endpoint: new URL("https://api.web3.storage"),
 });
 
-type UploadFileProps = Pick<CommonProps, "connectedUser">;
+type UploadFileProps = Pick<
+  CommonProps,
+  "connectedPublicKey" | "connectedWallet"
+>;
 
-export const UploadFile = ({ connectedUser }: UploadFileProps) => {
+export const UploadFile = ({
+  connectedPublicKey,
+  connectedWallet,
+}: UploadFileProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<string | null>(null);
@@ -25,7 +31,7 @@ export const UploadFile = ({ connectedUser }: UploadFileProps) => {
 
   const handleFileUpload = async () => {
     // Check if there's a file and valid wallet config
-    if (!(file && connectedUser)) {
+    if (!(file && connectedPublicKey && connectedWallet)) {
       return;
     }
     setLoading(true);
@@ -53,7 +59,7 @@ export const UploadFile = ({ connectedUser }: UploadFileProps) => {
       const encryptedSymmetricKey = Buffer.from(
         JSON.stringify(
           sigUtil.encrypt({
-            publicKey: connectedUser.publicKey.toString("base64"),
+            publicKey: connectedPublicKey.toString("base64"),
             data: mnemonic,
             version: "x25519-xsalsa20-poly1305",
           })
@@ -75,6 +81,7 @@ export const UploadFile = ({ connectedUser }: UploadFileProps) => {
         "data:application/json;base64," +
         Buffer.from(JSON.stringify(nftMetadata)).toString("base64");
       const tx = await metadriveFileContract.safeMint(
+        connectedWallet,
         dataUrl,
         encryptedSymmetricKey
       );
@@ -95,7 +102,9 @@ export const UploadFile = ({ connectedUser }: UploadFileProps) => {
       <Dropzone onDrop={handleDropzoneDrop} multiple={false}>
         <Stack>
           {file ? <Text weight="semibold">Selected: {file.name}</Text> : null}
-          <Text weight="semibold">Drag image here or click to select file</Text>
+          <Text weight="semibold" align="center">
+            Drag file here or click to select file
+          </Text>
         </Stack>
       </Dropzone>
       <Button loading={loading} onClick={handleFileUpload}>

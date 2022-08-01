@@ -3,38 +3,40 @@ import { MetaMaskInpageProvider } from "@metamask/providers";
 import {
   CommonProps,
   getMetadriveFileContract,
-  NftInfo,
   parseFileUrl,
+  FileInfo,
+  getFileExtension,
 } from "../utils";
 import * as bip39 from "bip39";
 import { decrypt } from "@metadrive/lib";
 import { saveAs } from "file-saver";
 import { SharingModal } from "./SharingModal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Download, Share } from "phosphor-react";
 
 interface FileCardProps extends Pick<CommonProps, "connectedWallet"> {
-  nftInfo: NftInfo;
+  fileInfo: FileInfo;
 }
 
 export const FileCard = ({
   connectedWallet,
-  nftInfo: { tokenId, metadata },
+  fileInfo: { tokenId, url, filename, sharedWith },
 }: FileCardProps) => {
   const [isSharingModalOpened, setIsSharingModalOpened] = useState(false);
 
   const handleFileDownload = async () => {
-    if (!(window.ethereum && metadata && connectedWallet)) {
+    if (!(window.ethereum && url && connectedWallet)) {
       return;
     }
 
-    const parsedFileUrl = parseFileUrl(metadata.external_url);
+    const parsedFileUrl = parseFileUrl(url);
     const ipfsCid = parsedFileUrl?.ipfsCid;
     if (!ipfsCid) {
       return;
     }
 
     const metadriveFileContract = getMetadriveFileContract();
-    const encryptedSymmetricKey = await metadriveFileContract.encryptionKeys(
+    const fileKey = await metadriveFileContract.fileKeys(
       tokenId,
       connectedWallet
     );
@@ -42,7 +44,7 @@ export const FileCard = ({
     const ethereum = window.ethereum as MetaMaskInpageProvider;
     const mnemonic = await ethereum.request({
       method: "eth_decrypt",
-      params: [encryptedSymmetricKey, connectedWallet],
+      params: [fileKey, connectedWallet],
     });
 
     const symmetricKey: Buffer = await bip39.mnemonicToSeed(mnemonic as string);
@@ -50,7 +52,7 @@ export const FileCard = ({
     const fetchResponse = await fetch("https://ipfs.io/ipfs/" + ipfsCid);
     const buffer = new Uint8Array(await fetchResponse.arrayBuffer());
     const fileBuffer = await decrypt(buffer, symmetricKey);
-    saveAs(new Blob([fileBuffer]), metadata.filename);
+    saveAs(new Blob([fileBuffer]), filename);
   };
 
   return (
@@ -60,12 +62,20 @@ export const FileCard = ({
         setOpened={setIsSharingModalOpened}
         connectedWallet={connectedWallet}
         tokenId={tokenId}
+        sharedWith={sharedWith}
       />
       <Card>
         <Stack>
-          <Text>{metadata.filename}</Text>
-          <Button onClick={handleFileDownload}>Download</Button>
-          <Button onClick={() => setIsSharingModalOpened(true)}>Share</Button>
+          <Text align="center">{filename}</Text>
+          <Button leftIcon={<Download />} onClick={handleFileDownload}>
+            Download
+          </Button>
+          <Button
+            leftIcon={<Share />}
+            onClick={() => setIsSharingModalOpened(true)}
+          >
+            Share
+          </Button>
         </Stack>
       </Card>
     </>

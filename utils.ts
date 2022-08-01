@@ -2,34 +2,26 @@ import { MetadriveFile__factory } from "@metadrive/typechain-types";
 import { ethers } from "ethers";
 import { Dispatch } from "react";
 import { config } from "./config";
+import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 
 export const hexStringToBuffer = (hexString: string) =>
   Buffer.from(hexString.slice(2), "hex");
 
-export const getUser = async (address: string): Promise<User | null> => {
+export const getPublicKey = async (address: string): Promise<Buffer | null> => {
   const metadriveFileContract = getMetadriveFileContract();
-  const user = await metadriveFileContract.users(address);
-  // User does not exist
-  if (user[1] === ethers.constants.HashZero) {
+  const publicKey = await metadriveFileContract.publicKeys(address);
+  if (publicKey === ethers.constants.HashZero) {
     return null;
   } else {
-    return {
-      username: user[0],
-      publicKey: hexStringToBuffer(user[1]),
-    };
+    return hexStringToBuffer(publicKey);
   }
 };
-
-export interface User {
-  username: string;
-  publicKey: Buffer;
-}
 
 export interface CommonProps {
   connectedWallet: string | null;
   setConnectedWallet: Dispatch<string | null>;
-  connectedUser: User | null;
-  setConnectedUser: Dispatch<User | null>;
+  connectedPublicKey: Buffer;
+  setConnectedPublicKey: Dispatch<Buffer | null>;
   isNetworkValid: boolean;
   setIsNetworkValid: Dispatch<boolean>;
 }
@@ -60,8 +52,15 @@ export const getMetadriveFileContract = () => {
   return metadriveFileContract;
 };
 
-export const trimAddress = (address: string) => {
-  return address.slice(0, 5) + "..." + address.slice(-3);
+export const getApolloClient = () => {
+  return new ApolloClient({
+    uri: config.metadriveFileSubgraphAddress,
+    cache: new InMemoryCache(),
+  });
+};
+
+export const trimAddress = (address: string, chars: number) => {
+  return address.slice(0, chars + 2) + "..." + address.slice(-chars);
 };
 
 interface ParsedFileUrl {
@@ -76,4 +75,81 @@ export const parseFileUrl = (url: string): ParsedFileUrl | null => {
   } else {
     return null;
   }
+};
+
+export const getFileExtension = (filename: string) => {
+  const splitArray = filename.split(".");
+  if (splitArray.length > 1) {
+    return splitArray.at(-1);
+  }
+  return undefined;
+};
+
+interface GraphFileShare {
+  user: {
+    address: string;
+  };
+}
+export interface GraphFile {
+  id: number;
+  tokenId: number;
+  uri: string;
+  fileShares: GraphFileShare[];
+}
+
+interface GraphGetFilesData {
+  files: GraphFile[];
+}
+
+interface GraphGetFilesVars {
+  owner: string;
+}
+
+export interface FileInfo {
+  tokenId: number;
+  filename: string;
+  url: string;
+  sharedWith: string[];
+}
+
+export const getFiles = async (owner: string) => {
+  const getFilesQuery = gql`
+    query GetFiles($owner: String!) {
+      files(where: { owner: $owner }) {
+        id
+        tokenId
+        uri
+        fileShares {
+          user {
+            address
+          }
+        }
+      }
+    }
+  `;
+  const apolloClient = getApolloClient();
+  const result = await apolloClient.query<GraphGetFilesData, GraphGetFilesVars>(
+    {
+      query: getFilesQuery,
+      variables: {
+        owner: owner.toLowerCase(),
+      },
+    }
+  );
+  const fileInfos: FileInfo[] = await Promise.all(
+    result.data.files.map(async (file) => {
+      const metadata = await fetch(file.uri);
+      const metadataJson = await metadata.json();
+      const fileInfo: FileInfo = {
+        tokenId: file.tokenId,
+        filename: metadataJson.filename,
+        url: metadataJson.external_url,
+        sharedWith: file.fileShares
+          .map((fileShare) => ethers.utils.getAddress(fileShare.user.address))
+          .filter((address) => address != owner),
+      };
+      return fileInfo;
+    })
+  );
+  return fileInfos;
 };

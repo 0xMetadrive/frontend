@@ -1,19 +1,107 @@
-import { AppShell, Group, Header, Stack, Text } from "@mantine/core";
+import {
+  AppShell,
+  Center,
+  Group,
+  Header,
+  Loader,
+  Space,
+  Stack,
+  Text,
+} from "@mantine/core";
 import type { NextPage } from "next";
 import ConnectWallet from "../components/ConnectWallet";
-import { CreateUser } from "../components/CreateUser";
+import { RegisterButton } from "../components/RegisterButton";
 import { ListFiles } from "../components/ListFiles";
 import { UploadFile } from "../components/UploadFile";
-import { CommonProps } from "../utils";
+import { getPublicKey } from "../utils";
+import { useEffect, useState } from "react";
+import { MetaMaskInpageProvider } from "@metamask/providers";
+import { config } from "../config";
+import { ethers } from "ethers";
 
-const Home: NextPage<CommonProps> = ({
-  connectedWallet,
-  setConnectedWallet,
-  connectedUser,
-  setConnectedUser,
-  isNetworkValid,
-  setIsNetworkValid,
-}) => {
+const Home: NextPage = () => {
+  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
+  const [connectedPublicKey, setConnectedPublicKey] = useState<Buffer | null>(
+    null
+  );
+  const [isNetworkValid, setIsNetworkValid] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // On every page load, check if wallet is connected or not
+  useEffect(() => {
+    const verifyConnection = async () => {
+      if (!window.ethereum) {
+        console.log("Metamask is not installed.");
+        return;
+      }
+
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum as ethers.providers.ExternalProvider,
+        "any"
+      );
+      const signer = provider.getSigner();
+      // Get wallet
+      try {
+        const user = await signer.getAddress();
+        setConnectedWallet(user);
+      } catch (error) {
+        setConnectedWallet(null);
+      }
+      // Get chain
+      const chainId = await signer.getChainId();
+      setIsNetworkValid(chainId === config.chainId);
+    };
+
+    verifyConnection();
+  }, []);
+
+  // Get public key on wallet and network change
+  useEffect(() => {
+    const fetchPublicKey = async () => {
+      setLoading(true);
+      setConnectedPublicKey(null);
+
+      if (!(window.ethereum && connectedWallet && isNetworkValid)) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const publicKey = await getPublicKey(connectedWallet);
+        setConnectedPublicKey(publicKey);
+      } catch (error) {
+        console.log(error);
+        setConnectedPublicKey(null);
+      }
+      setLoading(false);
+    };
+
+    fetchPublicKey();
+  }, [connectedWallet, isNetworkValid]);
+
+  // Event listener for account and chain change on Metamask
+  useEffect(() => {
+    if (!window.ethereum) {
+      return;
+    }
+    const ethereum = window.ethereum as MetaMaskInpageProvider;
+
+    const handleAccountsChanged = (accounts: string[]) => {
+      setConnectedWallet(accounts.length ? accounts[0] : null);
+    };
+    const handleChainChanged = () => {
+      window.location.reload();
+    };
+    ethereum.on("accountsChanged", handleAccountsChanged as any);
+    ethereum.on("chainChanged", handleChainChanged);
+
+    return () => {
+      // Clean up and remove event listeners
+      ethereum.removeListener("accountsChanged", handleAccountsChanged);
+      ethereum.removeListener("chainChanged", handleChainChanged);
+    };
+  });
+
   return (
     <AppShell
       padding="md"
@@ -23,15 +111,12 @@ const Home: NextPage<CommonProps> = ({
             <Text size="lg" weight="bold">
               Metadrive
             </Text>
-            <Group>
-              <Text>{connectedUser ? "Logged in" : ""}</Text>
-              <ConnectWallet
-                connectedWallet={connectedWallet}
-                setConnectedWallet={setConnectedWallet}
-                isNetworkValid={isNetworkValid}
-                setIsNetworkValid={setIsNetworkValid}
-              />
-            </Group>
+            <ConnectWallet
+              connectedWallet={connectedWallet}
+              setConnectedWallet={setConnectedWallet}
+              isNetworkValid={isNetworkValid}
+              setIsNetworkValid={setIsNetworkValid}
+            />
           </Group>
         </Header>
       }
@@ -44,18 +129,40 @@ const Home: NextPage<CommonProps> = ({
         },
       })}
     >
-      {connectedUser ? (
-        <>
-          <Group>
-            <UploadFile connectedUser={connectedUser} />
+      {loading ? (
+        <Center>
+          <Stack>
+            <Space h="lg" />
+            <Loader />
+          </Stack>
+        </Center>
+      ) : connectedWallet && isNetworkValid ? (
+        connectedPublicKey ? (
+          <Stack>
+            <Group position="center" grow>
+              <UploadFile
+                connectedPublicKey={connectedPublicKey}
+                connectedWallet={connectedWallet}
+              />
+            </Group>
+            <ListFiles connectedWallet={connectedWallet} />
+          </Stack>
+        ) : (
+          <Group position="center">
+            <RegisterButton
+              connectedWallet={connectedWallet}
+              setConnectedPublicKey={setConnectedPublicKey}
+            />
           </Group>
-          <ListFiles connectedWallet={connectedWallet} />
-        </>
+        )
       ) : (
-        <CreateUser
-          connectedWallet={connectedWallet}
-          setConnectedUser={setConnectedUser}
-        />
+        <Group position="center">
+          <Text>
+            {"Please connect to the " +
+              config.chainName +
+              " network using Metamask"}
+          </Text>
+        </Group>
       )}
     </AppShell>
   );
