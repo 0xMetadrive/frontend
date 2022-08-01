@@ -18,7 +18,6 @@ import { useEffect, useState } from "react";
 import { MetaMaskInpageProvider } from "@metamask/providers";
 import { config } from "../config";
 import { ethers } from "ethers";
-import { randomBytes } from "crypto";
 import { useListState } from "@mantine/hooks";
 
 const Home: NextPage = () => {

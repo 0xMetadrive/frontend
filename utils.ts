@@ -77,31 +77,20 @@ export const parseFileUrl = (url: string): ParsedFileUrl | null => {
   }
 };
 
-export const getFileExtension = (filename: string) => {
-  const splitArray = filename.split(".");
-  if (splitArray.length > 1) {
-    return splitArray.at(-1);
-  }
-  return undefined;
-};
-
-interface GraphFileShare {
-  user: {
-    address: string;
-  };
-}
-export interface GraphFile {
-  id: number;
-  tokenId: number;
-  uri: string;
-  fileShares: GraphFileShare[];
+interface GetFilesData {
+  files: {
+    id: number;
+    tokenId: number;
+    uri: string;
+    fileShares: {
+      user: {
+        address: string;
+      };
+    }[];
+  }[];
 }
 
-interface GraphGetFilesData {
-  files: GraphFile[];
-}
-
-interface GraphGetFilesVars {
+interface GetFilesVars {
   owner: string;
 }
 
@@ -128,14 +117,12 @@ export const getFiles = async (owner: string) => {
     }
   `;
   const apolloClient = getApolloClient();
-  const result = await apolloClient.query<GraphGetFilesData, GraphGetFilesVars>(
-    {
-      query: getFilesQuery,
-      variables: {
-        owner: owner.toLowerCase(),
-      },
-    }
-  );
+  const result = await apolloClient.query<GetFilesData, GetFilesVars>({
+    query: getFilesQuery,
+    variables: {
+      owner: owner.toLowerCase(),
+    },
+  });
   const fileInfos: FileInfo[] = await Promise.all(
     result.data.files.map(async (file) => {
       const metadata = await fetch(file.uri);

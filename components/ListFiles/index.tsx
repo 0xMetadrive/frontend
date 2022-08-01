@@ -1,5 +1,5 @@
 import { SimpleGrid } from "@mantine/core";
-import { CommonProps, FileInfo } from "../utils";
+import { CommonProps, FileInfo } from "../../utils";
 import { FileCard } from "./FileCard";
 
 interface ListFilesProps extends Pick<CommonProps, "connectedWallet"> {

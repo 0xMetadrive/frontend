@@ -5,8 +5,7 @@ import {
   getMetadriveFileContract,
   parseFileUrl,
   FileInfo,
-  getFileExtension,
-} from "../utils";
+} from "../../../utils";
 import * as bip39 from "bip39";
 import { decrypt } from "@metadrive/lib";
 import { saveAs } from "file-saver";
