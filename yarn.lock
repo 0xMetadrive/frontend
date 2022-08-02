@@ -677,16 +677,16 @@
   resolved "https://registry.yarnpkg.com/@mantine/utils/-/utils-5.0.0.tgz#576ebab6b0980b996ecb70b277f4ea378dcfb474"
   integrity sha512-Fy9BdxWvrXkplWua8ZKmsBQODo24QB8OPn6BEmvXUt4O+3qoP27VaAWQVea4opWZsy+L5dtEe/kOXY/Q/kC2qg==
 
-"@metadrive/lib@^0.1.1":
-  version "0.1.3"
-  resolved "https://registry.yarnpkg.com/@metadrive/lib/-/lib-0.1.3.tgz#716943dca9b60dce0e40397c28ec1bf04e6515fc"
-  integrity sha512-WW7VRdVN1SYRqpRNdSybH0ntj2TiuBObA13g3OZjcQMVxrTCuGVCLMUKIH/3XHeioJBA4m+u1isRht94GICW1A==
+"@metadrive/lib@^0.1.5":
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@metadrive/lib/-/lib-0.1.5.tgz#15adfa696408336f583df759fcae62efc9e85a38"
+  integrity sha512-x6D7kLao7u2CSi/YkdCy63FURkDyE4U2b4Q0SCflzPcpYv/1+ZbjlfT5kFLOMeF5ElE9hqM/Z3EdoY/dqxihlg==
   dependencies:
     bip39 "^3.0.4"
     crypto-ts "^1.0.2"
     pkcs7-padding "^0.1.1"
 
-"@metadrive/typechain-types@^0.1.1":
+"@metadrive/typechain-types@^0.1.9":
   version "0.1.9"
   resolved "https://registry.yarnpkg.com/@metadrive/typechain-types/-/typechain-types-0.1.9.tgz#3aaef19b2ab2e7eb851a9d86f4783565366dc5ed"
   integrity sha512-yuwpL7Oluqi/ubVWwfNp6IqcvBFsCGtjS5GMrFCM+HD4eQFMcb90UIFkxGp1NKqFLH7g0GTc40wvxUhvhQwlRw==
