@@ -1,4 +1,5 @@
-import { SimpleGrid } from "@mantine/core";
+import { Group, NativeSelect, SimpleGrid, Stack } from "@mantine/core";
+import { useEffect, useState } from "react";
 import { CommonProps, FileInfo } from "../../utils";
 import { FileCard } from "./FileCard";
 
@@ -7,15 +8,52 @@ interface ListFilesProps extends Pick<CommonProps, "connectedWallet"> {
 }
 
 export const ListFiles = ({ connectedWallet, fileInfos }: ListFilesProps) => {
+  const selectValues = ["All files", "Owned by you", "Shared with you"];
+  const [selectValue, setSelectValue] =
+    useState<typeof selectValues[number]>("All files");
+  const [filesToShow, setFilesToShow] = useState<FileInfo[]>([]);
+
+  useEffect(() => {
+    if (selectValue === "All files") {
+      setFilesToShow(fileInfos);
+    } else if (selectValue === "Owned by you") {
+      setFilesToShow(
+        fileInfos.filter(
+          (x) => x.owner.toLowerCase() === connectedWallet?.toLowerCase()
+        )
+      );
+    } else if (selectValue === "Shared with you") {
+      setFilesToShow(
+        fileInfos.filter(
+          (x) => x.owner.toLowerCase() !== connectedWallet?.toLowerCase()
+        )
+      );
+    }
+  }, [fileInfos, selectValue, connectedWallet]);
+
   return (
-    <SimpleGrid cols={6}>
-      {fileInfos?.map((fileInfo: FileInfo) => (
-        <FileCard
-          key={fileInfo.tokenId}
-          fileInfo={fileInfo}
-          connectedWallet={connectedWallet}
+    <Stack>
+      <Group position="right">
+        <NativeSelect
+          data={selectValues}
+          label="Filter files"
+          value={selectValue}
+          onChange={(event) =>
+            setSelectValue(
+              event.currentTarget.value as typeof selectValues[number]
+            )
+          }
         />
-      ))}
-    </SimpleGrid>
+      </Group>
+      <SimpleGrid cols={6}>
+        {filesToShow.map((fileInfo: FileInfo) => (
+          <FileCard
+            key={fileInfo.tokenId}
+            fileInfo={fileInfo}
+            connectedWallet={connectedWallet}
+          />
+        ))}
+      </SimpleGrid>
+    </Stack>
   );
 };

@@ -78,41 +78,47 @@ export const parseFileUrl = (url: string): ParsedFileUrl | null => {
 };
 
 interface GetFilesData {
-  files: {
-    id: number;
-    tokenId: number;
-    uri: string;
-    fileShares: {
-      user: {
+  fileShares: {
+    file: {
+      tokenId: number;
+      uri: string;
+      owner: {
         address: string;
       };
-    }[];
+    };
+    user: {
+      address: string;
+    };
+    fileKey: string;
   }[];
 }
 
 interface GetFilesVars {
-  owner: string;
+  user: string;
 }
 
 export interface FileInfo {
   tokenId: number;
-  filename: string;
   url: string;
-  sharedWith: string[];
+  filename: string;
+  owner: string;
 }
 
-export const getFiles = async (owner: string) => {
+export const getFiles = async (user: string) => {
   const getFilesQuery = gql`
-    query GetFiles($owner: String!) {
-      files(where: { owner: $owner }) {
-        id
-        tokenId
-        uri
-        fileShares {
-          user {
+    query ($user: String!) {
+      fileShares(where: { user: $user }) {
+        file {
+          tokenId
+          uri
+          owner {
             address
           }
         }
+        user {
+          address
+        }
+        fileKey
       }
     }
   `;
@@ -120,23 +126,62 @@ export const getFiles = async (owner: string) => {
   const result = await apolloClient.query<GetFilesData, GetFilesVars>({
     query: getFilesQuery,
     variables: {
-      owner: owner.toLowerCase(),
+      user: user.toLowerCase(),
     },
   });
+
   const fileInfos: FileInfo[] = await Promise.all(
-    result.data.files.map(async (file) => {
-      const metadata = await fetch(file.uri);
+    result.data.fileShares.map(async (fileShare) => {
+      const metadata = await fetch(fileShare.file.uri);
       const metadataJson = await metadata.json();
       const fileInfo: FileInfo = {
-        tokenId: file.tokenId,
+        tokenId: fileShare.file.tokenId,
         filename: metadataJson.filename,
         url: metadataJson.external_url,
-        sharedWith: file.fileShares
-          .map((fileShare) => ethers.utils.getAddress(fileShare.user.address))
-          .filter((address) => address != owner),
+        owner: ethers.utils.getAddress(fileShare.file.owner.address),
       };
       return fileInfo;
     })
   );
-  return fileInfos;
+
+  return fileInfos.reverse();
+};
+
+interface GetFileSharesData {
+  fileShares: {
+    user: {
+      address: string;
+    };
+  }[];
+}
+
+interface GetFileSharesVars {
+  tokenId: String;
+}
+
+export const getFileShares = async (tokenId: number) => {
+  const getFilesSharesQuery = gql`
+    query ($tokenId: String!) {
+      fileShares(where: { file: $tokenId }) {
+        user {
+          address
+        }
+      }
+    }
+  `;
+
+  const apolloClient = getApolloClient();
+  const result = await apolloClient.query<GetFileSharesData, GetFileSharesVars>(
+    {
+      query: getFilesSharesQuery,
+      variables: {
+        tokenId: tokenId.toString(),
+      },
+    }
+  );
+
+  const sharedWith: string[] = result.data.fileShares.map((fileShare) =>
+    ethers.utils.getAddress(fileShare.user.address)
+  );
+  return sharedWith.reverse();
 };

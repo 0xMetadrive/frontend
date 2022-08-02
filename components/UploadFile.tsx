@@ -11,6 +11,7 @@ import {
   getMetadriveFileContract,
   NftMetadata,
 } from "../utils";
+import { UploadSimple } from "phosphor-react";
 
 const web3StorageClient = new Web3Storage({
   token: config.web3StorageToken,
@@ -19,13 +20,13 @@ const web3StorageClient = new Web3Storage({
 
 interface UploadFileProps
   extends Pick<CommonProps, "connectedPublicKey" | "connectedWallet"> {
-  fileInfosAppend: (...items: FileInfo[]) => void;
+  fileInfosPrepend: (...items: FileInfo[]) => void;
 }
 
 export const UploadFile = ({
   connectedPublicKey,
   connectedWallet,
-  fileInfosAppend,
+  fileInfosPrepend,
 }: UploadFileProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -98,11 +99,11 @@ export const UploadFile = ({
       setLoadingStatus(null);
       setLoading(false);
       setFile(null);
-      fileInfosAppend({
+      fileInfosPrepend({
         tokenId,
+        owner: connectedWallet,
         filename: file.name,
         url: "ipfs://" + cid,
-        sharedWith: [],
       });
     } catch (error) {
       console.log(error);
@@ -122,7 +123,11 @@ export const UploadFile = ({
           </Text>
         </Stack>
       </Dropzone>
-      <Button loading={loading} onClick={handleFileUpload}>
+      <Button
+        leftIcon={<UploadSimple />}
+        loading={loading}
+        onClick={handleFileUpload}
+      >
         {loading && loadingStatus ? loadingStatus : "Upload"}
       </Button>
     </Stack>

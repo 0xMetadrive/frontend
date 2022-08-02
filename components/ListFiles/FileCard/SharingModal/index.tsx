@@ -4,6 +4,7 @@ import { BigNumberish, ethers } from "ethers";
 import { Dispatch, useEffect, useState } from "react";
 import {
   CommonProps,
+  getFileShares,
   getMetadriveFileContract,
   getPublicKey,
 } from "../../../../utils";
@@ -16,7 +17,6 @@ interface SharingModalProps extends Pick<CommonProps, "connectedWallet"> {
   opened: boolean;
   setOpened: Dispatch<boolean>;
   tokenId: BigNumberish;
-  sharedWith: string[];
 }
 
 export const SharingModal = ({
@@ -24,15 +24,13 @@ export const SharingModal = ({
   opened,
   setOpened,
   tokenId,
-  sharedWith: sharedWithInitial,
 }: SharingModalProps) => {
   const [address, setAddress] = useState<string>("");
   const [debouncedAddress] = useDebouncedValue(address, 200);
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [publicKey, setPublicKey] = useState<Buffer | null>(null);
   const [loading, setLoading] = useState(false);
-  const [sharedWith, sharedWithHandlers] =
-    useListState<string>(sharedWithInitial);
+  const [sharedWith, sharedWithHandlers] = useListState<string>([]);
 
   const handleShare = async () => {
     if (!(connectedWallet && isAddressValid && publicKey)) {
@@ -79,6 +77,16 @@ export const SharingModal = ({
 
     setLoading(false);
   };
+
+  // Fetch the list of users the file is shared with
+  useEffect(() => {
+    const fetchFileShares = async () => {
+      const fileShares = await getFileShares(Number(tokenId));
+      sharedWithHandlers.setState(
+        fileShares.filter((x) => x !== connectedWallet)
+      );
+    };
+  }, [connectedWallet, tokenId]);
 
   // Check if the entered address is valid
   useEffect(() => {

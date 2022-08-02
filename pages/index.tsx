@@ -164,7 +164,7 @@ const Home: NextPage = () => {
               <UploadFile
                 connectedPublicKey={connectedPublicKey}
                 connectedWallet={connectedWallet}
-                fileInfosAppend={fileInfosHandlers.append}
+                fileInfosPrepend={fileInfosHandlers.prepend}
               />
             </Group>
             <ListFiles
