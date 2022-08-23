@@ -43,6 +43,25 @@ const allConfigs: AllConfigs = {
       blockExplorerUrls: ["https://mumbai.polygonscan.com"],
     },
   },
+  production: {
+    chainId: 80001,
+    chainName: "Polygon Mumbai",
+    web3StorageToken: process.env.NEXT_PUBLIC_WEB3_STORAGE_TOKEN,
+    metadriveFileContractAddress: "0x4eD57116844256Ad97d9A008af1E1865126a5D9C",
+    metadriveFileSubgraphAddress:
+      "https://api.thegraph.com/subgraphs/name/0xmetadrive/metadrive-alpha-mumbai",
+    metamaskChainInfo: {
+      chainId: "0x13881",
+      rpcUrls: ["https://rpc-mumbai.matic.today"],
+      chainName: "Polygon Mumbai",
+      nativeCurrency: {
+        name: "MATIC",
+        symbol: "MATIC",
+        decimals: 18,
+      },
+      blockExplorerUrls: ["https://mumbai.polygonscan.com"],
+    },
+  },
 };
 
 type NodeEnvs = "development";
